@@ -1,0 +1,247 @@
+#:kivy 2.1.0
+#:import Animation kivy.animation.Animation
+#:import Factory kivy.factory.Factory
+BoxLayout:
+    orientation:'vertical'
+    padding:self.width*.1
+    spacing:self.width*.05
+    BoxLayout:
+        size_hint_y:.1
+        Button:
+            text:'Matchers'
+            background_color:1,1,0,1
+            font_size:self.height*.6
+            on_release:
+                app.button_click.play()
+                app.show_matchers()
+                app.matchers_popup.open()
+        Button:
+            text:'Options'
+            font_size:self.height*.6
+            on_release:
+                app.button_click.play()
+                Factory.options_popup().open()
+        Button:
+            id:start
+            text:'Start'
+            background_color:(0,1,0,1) if not self.disabled else (0,.5,0,1)
+            font_size:self.height*.6
+            background_disabled_normal:''
+            on_release:
+                app.button_click.play()
+                self.disabled=True
+                app.start_but()
+    Label:
+        text:'Memorize and Match'
+        bold:True
+        font_size:self.width*.1
+        color:0,1,1,1
+        size_hint_y:.15
+        outline_width:-self.width*.01
+        canvas.before:
+            Color:
+                rgba:0.282, 0.706, 0.859, 1.0
+            Line
+                rounded_rectangle:self.pos[0],self.pos[1],self.size[0],self.size[1],0
+                width:self.height*.04
+    BoxLayout:
+        size_hint_y:.05
+        Label:
+            markup:True
+            text:f'[u]Score[/u] : [color=#000000]{app.total_score+app.score}[/color]'
+            bold:True
+            font_size:self.height
+            text_size:self.size
+            halign:'left'
+            color:.133,.612,.298,1
+        Label:
+            markup:True
+            text:f'[u]Moves[/u] : [color=#000000]{app.total_moves+app.moves}[/color]'
+            bold:True
+            font_size:self.height
+            text_size:self.size
+            halign:'left'
+            color:.486,.012,.008,1
+    ProgressBar:
+        id:progress
+        size_hint_y:.005
+    GridLayout:
+        id:cards
+        spacing:10
+        rows:4
+        cols:4
+    Button:
+        id:replay
+        size_hint:.4,.4
+        pos_hint:{'center_x':.5}
+        background_normal:'images/replay.png'
+        background_disabled_normal:'images/replay_down.png'
+        background_down:'images/replay_down.png'
+        bold:True
+        font_size:self.width*.2
+        disabled:True
+        canvas.before:
+            Color:
+                rgba:0,0,0,1
+            Line:
+                rounded_rectangle:self.pos[0],self.pos[1],self.size[0],self.size[1],0
+                width:self.width*.03
+        on_release:
+            app.button_click.play()
+            app.replay()
+<Card>
+    background_color:0,0,0,1
+    background_disabled_normal:''
+    disabled:True
+    on_release:
+        self.background_color=1,1,1,1
+        app.nclick+=1
+        if app.nclick!=2 : app.previous = self ; app.card_click.play()
+        else : app.nclick=0;app.check_correct(self)
+    canvas.before:
+        Color:
+            rgba:0,0,0,1
+        Line:
+            rounded_rectangle:self.pos[0],self.pos[1],self.size[0],self.size[1],0
+            width:self.width*.02
+<Loss_Popup>
+    auto_dismiss:False
+    title:"Time Out"
+    title_size:self.height*.1
+    title_align:'center'
+    size_hint:.8,.3
+    BoxLayout:
+        orientation:'vertical'
+        Label:
+            markup:True
+            text:f'Your Final Score is [color=#FF0000][b]{app.total_score+app.score}[/b][/color]'
+            font_size:self.width*.08
+            size_hint_y:.5
+        BoxLayout:
+            padding:self.height*.25
+            Button:
+                text:'Finish'
+                font_size:self.width*.15
+                bold:True
+                on_release:app.button_click.play();app.finish();root.dismiss()
+<Win_Popup>
+    title_align:'center'
+    auto_dismiss:False
+    title:'You Win'
+    title_size:self.height*.1
+    size_hint:.8,.3
+    BoxLayout:
+        orientation:'vertical'
+        padding:self.width*.03
+        Label:
+            text:'Congratulations !'
+            font_size:self.width*.1
+            bold:True
+            color:0,1,1,1
+            outline_width:self.font_size*.1
+            size_hint_y:.5
+        BoxLayout:
+            padding:self.height*.25
+            Button:
+                text:'Finish'
+                font_size:self.width*.3
+                bold:True
+                on_release:app.button_click.play();app.finish();root.dismiss()
+            Button:
+                background_color:0,1,0,1
+                text:'Next'
+                font_size:self.width*.3
+                bold:True
+                on_release:
+                    app.button_click.play()
+                    app.total_moves+=app.moves
+                    app.total_score+=app.score
+                    app.speed+=1
+                    app.replay()
+                    root.dismiss()
+<Winner>
+    size_hint:.8,.3
+    auto_dismiss:False
+    title:'Congratulations'
+    title_color:0,1,0,1
+    title_size:self.height*.1
+    bold:True
+    title_align:'center'
+    BoxLayout:
+        orientation:'vertical'
+        padding:self.width*.03
+        spacing:self.width*.02
+        Label:
+            text:'You are the best matcher'
+            underline:True
+            bold:True
+            font_size:self.width*.06
+        BoxLayout:
+            Label:
+                text:'Enter your name :'
+                font_size:self.width*.12
+            TextInput:
+                id:the_beast
+                multiline:False
+        Button:
+            text:'Ok'
+            on_release:
+                app.button_click.play()
+                if the_beast.text.isascii() and the_beast.text.isalnum() and len(the_beast.text)<11 :\
+                app.save_score(the_beast.text,app.total_score+app.score,app.total_moves+app.moves);app.total_score=app.total_moves=app.score=app.moves=0;root.dismiss()
+                else : Factory.Validation().open()
+<Validation@Popup>
+    size_hint:.6,.2
+    title:'Not Valid'
+    title_align:'center'
+    title_size:self.height*.1
+    BoxLayout:
+        padding:self.height*.1
+        orientation:'vertical'
+        Label:
+            text:'Please, enter a name which consists of only numbers and alphabets and has 15 characters at most.'
+            text_size:self.size
+            font_size:self.width*.04
+            valign:'top'
+        Button:
+            text:'Ok'
+            on_release:app.button_click.play();root.dismiss()
+<options_popup@Popup>
+    size_hint:.8,.4
+    auto_dismiss:False
+    title:'Options'
+    title_align:'center'
+    title_size:self.height*.1
+    BoxLayout:
+        orientation:'vertical'
+        padding:self.width*.1
+        spacing:self.width*.1
+        GridLayout:
+            spacing:self.width*.1
+            cols:2
+            Label:
+                text:'Audio'
+                text_size:self.size
+                font_size:self.height*.8
+            Switch:
+                active:app.state()[0]
+                on_active:
+                    app.button_click.play()
+                    app.cr.execute(f'UPDATE options SET sound={int(self.active)}')
+                    app.db.commit()
+                    app.switch_audio(int(self.active))
+            Label:
+                text:'Background'
+                font_size:self.height*.8
+            Spinner:
+                text:app.state()[1]
+                font_size:self.height*.8
+                values:['White','Blue','Brown']
+                on_text:app.button_click.play();app.change_background(self.text)
+        Button:
+            size_hint:.5,.5
+            pos_hint:{'center_x':.5}
+            text:'Ok'
+            font_size:self.height*.8
+            bold:True
+            on_release:app.button_click.play();root.dismiss()
